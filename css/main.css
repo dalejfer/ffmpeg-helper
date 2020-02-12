@@ -1,0 +1,22 @@
+/* GtkStatusbar styles */
+#sb_working {
+    background-color: #7800c9;
+    border-color: #7800c9;
+    color: white;
+}
+#sb_ready {
+    background-color: #5674fa;
+    border-color: #5674fa;
+    color: white;
+}
+#sb_error {
+    background-color: #ca5555;
+    border-color: #ca5555;
+    color: white;
+}
+#sb_done {
+    background-color: #63c95e;
+    border-color: #63c95e;
+    color: white;
+}
+/* GtkStatusbar styles */
