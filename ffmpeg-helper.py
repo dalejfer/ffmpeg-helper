@@ -1,9 +1,19 @@
-#!python3.4
-"""GUI controller class file
-
+#!C:\msys64\mingw64\bin\python3.9.exe
+"""
 class FFmpegGui
     Main gui for this simple FFmpeg helper program.
+
+class StreamsWindow
+    Dialog window showing the file's streams information
+
+Helper functions:
+    filesize
+        return formatted string of the order of magnitude of the file size
+    
+    start_log
+        set up & start logging
 """
+
 from multiprocessing import Process, Pipe, freeze_support
 import ctypes
 import logging
@@ -14,13 +24,16 @@ gi.require_version('Gtk', '3.0')
 gi.require_version('GLib', '2.0')
 from gi.repository import Gtk, GLib, Gdk, Pango
 
+# settings = Gtk.Settings.get_default()
+# settings.set_property("gtk-theme-name", "Windows10")
+# settings.set_property("gtk-application-prefer-dark-theme", False)
 
 import ffadapter
 
 GLADE_PATH = "ui/"
 FFMPEG_HELPER_ID = u'dalejfer.ffmpeghelper.0.5'
 
-class FFmpegGui(object):
+class FFmpegGui:
     """Class representing the programs gui."""
 
     def __init__(self):
@@ -64,6 +77,7 @@ class FFmpegGui(object):
         self.apply_button.set_always_show_image(True)
         self.cancel_button.set_always_show_image(True)
 
+        # add css for statusbar
         screen = Gdk.Screen.get_default()
         css_provider = Gtk.CssProvider()
         # css_provider.load_from_path("./themes/Default/gtk-3.0/gtk.css")
@@ -448,7 +462,8 @@ class FFmpegGui(object):
         elif msg_type == 2:
             msg_type = Gtk.MessageType.WARNING
 
-        dialog = Gtk.MessageDialog(self.window, 0, msg_type, Gtk.ButtonsType.OK, message)
+        dialog = Gtk.MessageDialog(parent=self.window, flags=0, message_type=msg_type,
+                                   buttons=Gtk.ButtonsType.OK, text=message)
         if extra_text:
             dialog.format_secondary_text(extra_text)
         dialog.run()
@@ -472,7 +487,7 @@ class FFmpegGui(object):
         if pop_it:
             GLib.timeout_add_seconds(timeout, self._pop_statusbar)
 
-class StreamsWindow(object):
+class StreamsWindow:
     """Manages Streams info window"""
     def __init__(self, parent, streams, callback):
         self.parent_callback = callback
@@ -515,7 +530,7 @@ def main():
     start_log("debug")
     # start_log("info")
     logging.info("----------Starting-program----------")
-    # set app user model id for taskbar icon resolution
+    # set app user model id for taskbar icon resolution (Windows)
     ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(FFMPEG_HELPER_ID)
     dummy_gui = FFmpegGui()
     Gtk.main()
@@ -534,6 +549,6 @@ def start_log(level="info"):
                             datefmt='%H:%M:%S', level=logging.INFO)
 
 if __name__ == "__main__":
-    # https://docs.python.org/2.7/library/multiprocessing.html#multiprocessing.freeze_support
+    # https://docs.python.org/3.9/library/multiprocessing.html#multiprocessing.freeze_support
     freeze_support() # needed for freezing with pyinstaller
     main()

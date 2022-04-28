@@ -1,4 +1,8 @@
-"""FFmpeg API"""
+"""
+FFmpeg addapter module
+
+helper functions
+"""
 
 import sys
 import os
@@ -6,14 +10,15 @@ import time
 import re
 import logging
 from datetime import datetime
-from subprocess import Popen, PIPE
+from subprocess import Popen, PIPE, CREATE_NO_WINDOW
+import shutil
 
 def generate_output_filename(in_file, container):
     """generate an output file to prevent original overwrite
 
         check if available without generating new
             meaning, maybe available with new extension
-            original.avi -> new.mp4
+            filename.avi -> filename.mp4
             would be ok
         if not available, generate"""
     logging.info("Generating output file.")
@@ -29,7 +34,8 @@ def generate_output_filename(in_file, container):
 def prepare_command(options):
     """refine command"""
     logging.info("Prepairing command.")
-    command = ["C:\\ffmpeg\\bin\\ffmpeg.exe", "-y"]
+    # TODO: use config file with path to ffmpeg.exe
+    command = [shutil.which("ffmpeg"), "-y"]
     # check if file exists
     in_file = options["input"]
     if os.path.exists(in_file):
@@ -39,8 +45,10 @@ def prepare_command(options):
         return False
     if "in_audio" in options:
         # set up to override the input video's audio if any
+        # TODO: this assumes that the first input's video stream is 0:0 and its audio
+        # stream is 0:1
         command.extend(["-i", options["in_audio"], "-map", "0:0", "-map", "1:0"])
-    # video options will alway sbe added
+    # video options will always be added
     command.extend(["-c:v", options["videocodec"]])
     if "crf" in options:
         command.extend(["-crf", options["crf"]])
@@ -82,7 +90,7 @@ def prepare_command(options):
         command.append(generate_output_filename(options["input"],
                                                 options["container"]))
     logging.info("FFmpeg command done: %s", command)
-    print("FFmpeg command done:", command)
+    print("FFmpeg command done: ", command)
     return command
 
 def time_difference(start, end):
@@ -138,7 +146,7 @@ def ffmpeg_encode(options, conn):
 
     command = prepare_command(options)
     if command:
-        with Popen(command, stderr=PIPE, universal_newlines=True) as ffmpeg:
+        with Popen(command, stderr=PIPE, universal_newlines=True, creationflags=CREATE_NO_WINDOW) as ffmpeg:
             for line in ffmpeg.stderr:
                 if "time=" in line:
                     elapsed_str = line[line.index("time=")+5:line.index("time=")+16]
@@ -166,12 +174,12 @@ def ffmpeg_encode(options, conn):
         sys.exit(1)
 
 def probe(infile, conn):
-    """runs ffprobe on the file to get it's info
+    """runs ffprobe on the file to get it's streams info
 
     ffprobe, unlike ffmpeg, send its output through stdout
     """
     logging.debug("Starting file probe with FFprobe.")
-    command = ["ffprobe", "-v", "error", "-show_entries",
+    command = [shutil.which("ffprobe"), "-v", "error", "-show_entries",
                "stream=codec_type,duration,codec_name,width,height,bit_rate,language",
                "-of", "default=noprint_wrappers=0:nokey=0", "-sexagesimal", "-i", infile]
     streams = []
@@ -189,6 +197,3 @@ def probe(infile, conn):
     # print("ffadapter.py ffprobe results: ", streams)
     conn.send(streams)
     sys.exit(ffprobe.returncode)
-
-if __name__ == "__main__":
-    pass
